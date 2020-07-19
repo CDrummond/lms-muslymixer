@@ -1,0 +1,53 @@
+# String file for Musly plugin
+
+MUSLYMIXER
+	EN	Musly Mixer
+
+MUSLYMIXER_DESC
+	EN	Musly Mixer for Don't Stop The Music
+
+SETUP_FILTER_GENRES
+	EN	Restrict genres
+
+SETUP_FILTER_GENRES_DESC
+	EN	Restrict mix to the genres similar to that of the seed (Default: Yes)
+
+SETUP_PORT
+	CS	HTTP port Musly
+	DA	Musly HTTP-port
+	DE	Musly - HTTP-Anschluss
+	EN	Musly HTTP Port
+	ES	Puerto HTTP de Musly
+	FI	Musly:n HTTP-portti
+	FR	Port HTTP Musly
+	HE	יציאת HTTP של Musly
+	IT	Porta HTTP Musly
+	NL	Musly-HTTP-poort
+	NO	Http-port for Musly
+	PL	Port HTTP usługi Musly
+	RU	HTTP-порт Musly
+	SV	HTTP-port för Musly
+	ZH_CN	Musly HTTP端口
+
+SETUP_PORT_DESC
+	CS	Služba API Musly umožňuje výběr http portu k použití pro dotazy na Musly API. Vložte zde číslo portu k přiřazení nastavení, které jste zvolili, k nastavení Mixéru Music IP.
+	DA	I grænsesnittet til Musly-tjenesten kan man definere en http-port der skal bruges ved forespørgsler til Musly. Her skal du angive det portnummer som svarer til det du valgte i indstillingerne for Musly Mixer.
+	DE	Mit dem Musly Service API können Sie einen HTTP-Anschluss für Anfragen an das Musly API auswählen. Geben Sie dieselbe Anschlussnummer wie in Musly Mixer ein.
+	EN	The Musly Service API allows the selection of an http port to use for queries to the Musly API. Enter the port number here to match the setting you have chosen in Musly Mixer settings.
+	ES	La API de servicios de Musly permite seleccionar un puerto HTTP para usarlo para consultas a la API de Musly. Introduzca aquí el número de puerto para que coincida con el elegido en la configuración del mezclador de Musly.
+	FI	Musly-palvelun API sallii Musly:n API-pyynnöissä käytetyn HTTP-portin valinnan. Kirjoita tähän portin numero, joka vastaa Musly Mixerin asetuksissa valitsemaasi portin numeroa.
+	FR	L'API du service Musly permet de sélectionner un port HTTP à utiliser pour les requêtes. Saisissez ici le numéro de port spécifié dans les réglages Musly Mixer.
+	HE	ממשק תוכנת היישום (API) של שירות Musly מאפשרת לבחור יציאת http לשימוש עבור שאילתות ל-API של Musly. הזן בשדה זה את מספר היציאה בהתאם להגדרה שבחרת בהגדרות יוצר המיקסים של Musly.
+	IT	La API del servizio Musly consente di selezionare una porta HTTP da utilizzare per l'invio di query all'API di Musly. Inserire qui il numero di porta corrispondente a quello indicato nelle impostazioni della raccolta Musly.
+	NL	De Musly-service API biedt de mogelijkheid om een HTTP-poort te gebruiken voor vragen aan de Musly-API. Geef hier het poortnummer op dat je in de Musly-mixerinstellingen hebt gekozen.
+	NO	I tjeneste-API-en for Musly kan du velge en http-port til henvendelser til Musly-API-en. Angi det samme portnummeret her som du har angitt i innstillingene for Musly-mikseren.
+	PL	Interfejs API usługi Musly umożliwia wybranie portu http używanego w celu wysyłania zapytań do tego interfejsu. Wprowadź tutaj numer portu zgodny z wybranymi miksera w usłudze Musly.
+	RU	Интерфейс Musly Service API позволяет выбрать НТТР-порт для запросов к Musly API. Введите здесь номер порта, соответствующий вашим настройкам Musly Mixer.
+	SV	I gränssnittet till Musly-tjänstens kan man ange en HTTP-port som ska användas vid förfrågningar till Musly. Ange ett portnummer här som motsvarar inställningen du gjort i Inställningar för Musly Mixer.
+	ZH_CN	您可以通过Musly的服务应用程序接口来选择用来询问Musly应用程序接口的http端口。请在此输入匹配您在Musly里已设置好的端口号。
+
+MUSLYMIXER_MIX
+	EN	Musly
+
+DEBUG_PLUGIN_MUSLYMIXER
+	EN	Musly Mixer
