@@ -36,7 +36,7 @@ my $initialized = 0;
 my $MuslyPort;
 my @genreSets = ();
 my $NUM_TRACKS = 15;
-my $NUM_TRACKS_TO_USE = 10;
+my $NUM_TRACKS_TO_USE = 5;
 my $NUM_SEED_TRACKS = 5;
 my $IGNORE_LAST_TRACKS = 50;
 
