@@ -104,12 +104,14 @@ sub postinitPlugin {
 
             # Remove duplicates...
             $tracks = Slim::Plugin::DontStopTheMusic::Plugin->deDupe($tracks);
+
+            # Shuffle tracks...
+            Slim::Player::Playlist::fischer_yates_shuffle($tracks);
+
             # If we have more than num tracks, then use 1st num...
             if ( scalar @$tracks > $NUM_TRACKS_TO_USE ) {
                 $tracks = [ splice(@$tracks, 0, $NUM_TRACKS_TO_USE) ];
             }
-            # Shuffle tracks...
-            Slim::Player::Playlist::fischer_yates_shuffle($tracks);
             $cb->($client, $tracks);
         });
     }
