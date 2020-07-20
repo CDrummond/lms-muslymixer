@@ -47,7 +47,7 @@ SETUP_PORT_DESC
 	ZH_CN	您可以通过Musly的服务应用程序接口来选择用来询问Musly应用程序接口的http端口。请在此输入匹配您在Musly里已设置好的端口号。
 
 MUSLYMIXER_MIX
-	EN	Musly
+	EN	Musly Mixer
 
 DEBUG_PLUGIN_MUSLYMIXER
 	EN	Musly Mixer
