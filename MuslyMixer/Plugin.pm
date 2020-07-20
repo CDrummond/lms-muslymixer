@@ -38,6 +38,7 @@ my @genreSets = ();
 my $NUM_TRACKS = 10;
 my $NUM_TRACKS_TO_USE = 5;
 my $NUM_SEED_TRACKS = 5;
+my $IGNORE_LAST_TRACKS = 50;
 
 my $log = Slim::Utils::Log->addLogCategory({
     'category'     => 'plugin.muslymixer',
@@ -81,22 +82,39 @@ sub postinitPlugin {
             my ($client, $cb) = @_;
 
             my $seedTracks = Slim::Plugin::DontStopTheMusic::Plugin->getMixableProperties($client, $NUM_SEED_TRACKS);
+            my $ignoreTracks = _getPlaylist($client, $IGNORE_LAST_TRACKS);
             my $tracks = [];
 
             # don't seed from radio stations - only do if we're playing from some track based source
             # Get list of valid seeds...
             if ($seedTracks && ref $seedTracks && scalar @$seedTracks) {
+                my @seedIds = ();
                 my @seedsToUse = ();
                 foreach my $seedTrack (@$seedTracks) {
                     my ($trackObj) = Slim::Schema->find('Track', $seedTrack->{id});
                     if ($trackObj) {
                         main::DEBUGLOG && $log->debug("Seed " . $trackObj->path . " id:" . $seedTrack->{id});
                         push @seedsToUse, $trackObj;
+                        push @seedIds, $seedTrack->{id};
                     }
                 }
 
                 if (scalar @seedsToUse > 0) {
-                    my $mix = _getMix(\@seedsToUse);
+                    my @tracksToIgnore = ();
+                    if ($ignoreTracks && ref $ignoreTracks && scalar @$ignoreTracks) {
+                        my %hash = map { $_ => 1 } @seedIds;
+                        foreach my $ignoreTrack (@$ignoreTracks) {
+                            if (!exists($hash{$ignoreTrack})) {
+                                my ($trackObj) = Slim::Schema->find('Track', $ignoreTrack);
+                                if ($trackObj) {
+                                    push @tracksToIgnore, $trackObj;
+                                }
+                            }
+                        }
+                        main::DEBUGLOG && $log->debug("Num tracks to ignore: " . scalar(@tracksToIgnore));
+                    }
+
+                    my $mix = _getMix(\@seedsToUse, \@tracksToIgnore);
                     main::idleStreams();
                     if ($mix && scalar @$mix) {
                         push @$tracks, @$mix;
@@ -105,16 +123,20 @@ sub postinitPlugin {
             }
 
             # Remove duplicates...
-            $tracks = Slim::Plugin::DontStopTheMusic::Plugin->deDupe($tracks);
+            my $deDupTracks = Slim::Plugin::DontStopTheMusic::Plugin->deDupe($tracks);
+            if ( scalar @$deDupTracks < $NUM_TRACKS_TO_USE ) {
+                main::DEBUGLOG && $log->debug("Too few tracks after de-dupe, use orig");
+                $deDupTracks = $tracks;
+            }
 
             # Shuffle tracks...
-            Slim::Player::Playlist::fischer_yates_shuffle($tracks);
+            Slim::Player::Playlist::fischer_yates_shuffle($deDupTracks);
 
             # If we have more than num tracks, then use 1st num...
-            if ( scalar @$tracks > $NUM_TRACKS_TO_USE ) {
-                $tracks = [ splice(@$tracks, 0, $NUM_TRACKS_TO_USE) ];
+            if ( scalar @$deDupTracks > $NUM_TRACKS_TO_USE ) {
+                $deDupTracks = [ splice(@$deDupTracks, 0, $NUM_TRACKS_TO_USE) ];
             }
-            $cb->($client, $tracks);
+            $cb->($client, $deDupTracks);
         });
     }
 }
@@ -129,9 +151,36 @@ sub title {
     return 'MuslyMIXER';
 }
 
+sub _getPlaylist {
+    my ($client, $count) = @_;
+    return unless $client;
+
+    $client = $client->master;
+    my ($trackId, $artist, $title, $duration, $mbid, $artist_mbid, $tracks);
+
+    foreach (@{ Slim::Player::Playlist::playList($client) }) {
+        ($artist, $title, $duration, $trackId, $mbid, $artist_mbid) = Slim::Plugin::DontStopTheMusic::Plugin->getMixablePropertiesFromTrack($client, $_);
+        next unless defined $artist && defined $title;
+        push @$tracks, $trackId;
+    }
+
+    return $tracks;
+    if ($tracks && ref $tracks) {
+        my $num = scalar $tracks;
+        if ($num > 0) {
+            if ($num > $count) {
+                $tracks = [ splice(@$tracks, $num - $count, $count) ];
+            }
+            return $tracks;
+        }
+    }
+}
+
 sub _getMix {
     my $seedTracks = shift;
+    my $ignoreTracks = shift;
     my @tracks = ref $seedTracks ? @$seedTracks : ($seedTracks);
+    my @ignore = ref $ignoreTracks ? @$ignoreTracks : ($ignoreTracks);
     my @mix = ();
     my $req;
     my $res;
@@ -153,9 +202,18 @@ sub _getMix {
         'track=' . escape($id);
     } @tracks);
 
-    main::DEBUGLOG && $log->debug("Request http://localhost:$MuslyPort/api/similar?$mixArgs\&$argString");
+    my $reqUrl = "/api/similar?$mixArgs\&$argString";
 
-    my $response = _syncHTTPRequest("/api/similar?$mixArgs\&$argString");
+    if (scalar @ignore > 0) {
+        my $ignoreArgs = join('&', map {
+            my $id = index($_->url, '#')>0 ? $_->url : $_->path;
+            $id = main::ISWINDOWS ? $id : Slim::Utils::Unicode::utf8decode_locale($id);
+            'ignore=' . escape($id);
+        } @ignore);
+        $reqUrl = "$reqUrl\&$ignoreArgs";
+    }
+
+    my $response = _syncHTTPRequest($reqUrl);
 
     if ($response->is_error) {
         $log->warn("Warning: Couldn't get mix: $mixArgs\&$argString");
@@ -187,6 +245,7 @@ sub _syncHTTPRequest {
     $MuslyPort = $prefs->get('port') unless $MuslyPort;
     my $http = LWP::UserAgent->new;
     $http->timeout($prefs->get('timeout') || 5);
+    main::DEBUGLOG && $log->debug("Request http://localhost:$MuslyPort$url");
     return $http->get("http://localhost:$MuslyPort$url");
 }
 
