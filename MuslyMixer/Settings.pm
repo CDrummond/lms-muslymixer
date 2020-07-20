@@ -14,26 +14,27 @@ use Slim::Utils::Strings qw(string);
 use Slim::Utils::Prefs;
 
 my $log = Slim::Utils::Log->addLogCategory({
-	'category'     => 'plugin.mipmixer',
+	'category'     => 'plugin.muslymixer',
 	'defaultLevel' => 'ERROR',
 });
 
-my $prefs = preferences('plugin.mipmixer');
+my $prefs = preferences('plugin.muslymixer');
 
 sub name {
-	return Slim::Web::HTTP::CSRF->protectName('MIPMIXER');
+	return Slim::Web::HTTP::CSRF->protectName('MUSLYMIXER');
 }
 
 sub page {
-	return Slim::Web::HTTP::CSRF->protectURI('plugins/MuslyMixer/settings/mipmixer.html');
+	return Slim::Web::HTTP::CSRF->protectURI('plugins/MuslyMixer/settings/muslymixer.html');
 }
 
 sub prefs {
-	return ($prefs, qw(port filter_genres ));
+	return ($prefs, qw(port filter_genres min_duration max_duration));
 }
 
 sub handler {
 	my ($class, $client, $params, $callback, @args) = @_;
+	return $class->SUPER::handler($client, $params);
 }
 
 1;

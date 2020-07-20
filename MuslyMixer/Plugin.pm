@@ -59,6 +59,8 @@ sub initPlugin {
     $prefs->init({
         filter_genres => 1,
         port          => 11000,
+        min_duration  => 0,
+        max_duration  => 0
     });
 
     if ( main::WEBUI ) {
@@ -137,7 +139,9 @@ sub _getMix {
     my %args = (
             'count'       => $NUM_TRACKS,
             'format'      => 'text',
-            'filtergenre' => $prefs->get('filter_genres')
+            'filtergenre' => $prefs->get('filter_genres'),
+            'min'         => $prefs->get('min_duration'),
+            'max'         => $prefs->get('max_duration')
         );
 
     my $argString = join( '&', map { "$_=$args{$_}" } keys %args );
