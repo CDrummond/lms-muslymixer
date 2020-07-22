@@ -38,7 +38,7 @@ my @genreSets = ();
 my $NUM_TRACKS = 15;
 my $NUM_TRACKS_TO_USE = 5;
 my $NUM_SEED_TRACKS = 5;
-my $IGNORE_LAST_TRACKS = 50;
+my $IGNORE_LAST_TRACKS = 25;
 
 my $log = Slim::Utils::Log->addLogCategory({
     'category'     => 'plugin.muslymixer',
