@@ -15,6 +15,10 @@
             </select>
         [% END %]
 
+        [% WRAPPER settingGroup title="MUSLYMIXER_EXCLUDE_ATRISTS" desc="MUSLYMIXER_EXCLUDE_ATRISTS_DESC" %]
+            <input type="text" class="stdedit" name="pref_exclude_artists" id="exclude_artists" value="[% prefs.pref_exclude_artists %]" size="80">
+        [% END %]
+
         [% IF prefs.exists('pref_min_duration') %]
             [% WRAPPER settingGroup title="MUSLYMIXER_MIN_DURATION" desc="MUSLYMIXER_MIN_DURATION_DESC" %]
                 <input type="text" class="stdedit" name="pref_min_duration" id="min_duration" value="[% prefs.pref_min_duration %]" size="5">

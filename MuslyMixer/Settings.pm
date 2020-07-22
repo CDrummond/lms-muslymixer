@@ -29,7 +29,7 @@ sub page {
 }
 
 sub prefs {
-	return ($prefs, qw(port filter_genres filter_xmas min_duration max_duration));
+	return ($prefs, qw(port filter_genres filter_xmas exclude_artists min_duration max_duration));
 }
 
 sub handler {

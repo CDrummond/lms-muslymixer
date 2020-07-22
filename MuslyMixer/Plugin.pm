@@ -58,11 +58,12 @@ sub initPlugin {
     return 1 if $initialized;
 
     $prefs->init({
-        filter_genres => 1,
-        filter_xmas   => 1,
-        port          => 11000,
-        min_duration  => 0,
-        max_duration  => 0
+        filter_genres   => 1,
+        filter_xmas     => 1,
+        exclude_artists => '',
+        port            => 11000,
+        min_duration    => 0,
+        max_duration    => 0
     });
 
     if ( main::WEBUI ) {
@@ -213,6 +214,13 @@ sub _getMix {
             'ignore=' . escape($id);
         } @ignore);
         $reqUrl = "$reqUrl\&$ignoreArgs";
+    }
+
+    my $exclude = $prefs->get('exclude_artists');
+    if ($exclude) {
+        my @excludeList = split(/,/, $exclude);
+        my $excludeArgs = join('&', map { 'exclude=' . escape($_); } @excludeList);
+        $reqUrl = "$reqUrl\&$excludeArgs";
     }
 
     my $response = _syncHTTPRequest($reqUrl);
