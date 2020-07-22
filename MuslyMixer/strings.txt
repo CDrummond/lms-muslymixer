@@ -6,13 +6,19 @@ MUSLYMIXER
 MUSLYMIXER_DESC
 	EN	Musly Mixer for Don't Stop The Music
 
-SETUP_FILTER_GENRES
+MUSLYMIXER_FILTER_GENRES
 	EN	Restrict genres
 
-SETUP_FILTER_GENRES_DESC
+MUSLYMIXER_FILTER_GENRES_DESC
 	EN	Restrict mix to the genres similar to that of the seed (Default: Yes)
 
-SETUP_PORT
+MUSLYMIXER_FILTER_XMAS
+	EN	Exclude 'Christmas' genre
+
+MUSLYMIXER_FILTER_XMAS_DESC
+	EN	Exclude tracks tagged with 'Christmas' genre, unless in December (Default: Yes)
+
+MUSLYMIXER_MUSLY_PORT
 	CS	HTTP port Musly
 	DA	Musly HTTP-port
 	DE	Musly - HTTP-Anschluss
@@ -29,7 +35,7 @@ SETUP_PORT
 	SV	HTTP-port för Musly
 	ZH_CN	Musly HTTP端口
 
-SETUP_PORT_DESC
+MUSLYMIXER_MUSLY_PORT_DESC
 	EN	Port number on which Musly API server is running.
 
 MUSLYMIXER_MIN_DURATION

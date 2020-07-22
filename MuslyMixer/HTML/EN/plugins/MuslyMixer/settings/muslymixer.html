@@ -1,31 +1,37 @@
 [% PROCESS settings/header.html %]
 
-	[% WRAPPER settingSection %]
-		[% WRAPPER settingGroup title="SETUP_FILTER_GENRES" desc="SETUP_FILTER_GENRES_DESC" %]
-			<select class="stdedit" name="pref_filter_genres" id="filter_genres">
-				<option [% IF NOT prefs.filter_genres %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
-				<option [% IF prefs.filter_genres %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
-			</select>
-		[% END %]
+    [% WRAPPER settingSection %]
+        [% WRAPPER settingGroup title="MUSLYMIXER_FILTER_XMAS" desc="MUSLYMIXER_FILTER_GENRES_DESC" %]
+            <select class="stdedit" name="pref_filter_genres" id="filter_genres">
+                <option [% IF NOT prefs.filter_genres %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
+                <option [% IF prefs.filter_genres %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
+            </select>
+        [% END %]
 
-		[% IF prefs.exists('pref_min_duration') %]
-			[% WRAPPER settingGroup title="MUSLYMIXER_MIN_DURATION" desc="MUSLYMIXER_MIN_DURATION_DESC" %]
-				<input type="text" class="stdedit" name="pref_min_duration" id="min_duration" value="[% prefs.pref_min_duration %]" size="5">
-			[% END %]
-		[% END %]
-		[% IF prefs.exists('pref_max_duration') %]
-			[% WRAPPER settingGroup title="MUSLYMIXER_MAX_DURATION" desc="MUSLYMIXER_MAX_DURATION_DESC" %]
-				<input type="text" class="stdedit" name="pref_max_duration" id="max_duration" value="[% prefs.pref_max_duration %]" size="5">
-			[% END %]
-		[% END %]
-	[% END %]
+        [% WRAPPER settingGroup title="MUSLYMIXER_FILTER_XMAS" desc="MUSLYMIXER_FILTER_XMAS_DESC" %]
+            <select class="stdedit" name="pref_filter_xmas" id="filter_xmas">
+                <option [% IF NOT prefs.filter_xmas %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
+                <option [% IF prefs.filter_xmas %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
+            </select>
+        [% END %]
 
-	[% WRAPPER settingSection %]
-		[% IF prefs.exists('pref_port') %]
-			[% WRAPPER settingGroup title="SETUP_PORT" desc="SETUP_PORT_DESC" %]
-				<input type="text" class="stdedit" name="pref_port" id="port" value="[% prefs.pref_port %]" size="5">
-			[% END %]
-		[% END %]
-	[% END %]
+        [% IF prefs.exists('pref_min_duration') %]
+            [% WRAPPER settingGroup title="MUSLYMIXER_MIN_DURATION" desc="MUSLYMIXER_MIN_DURATION_DESC" %]
+                <input type="text" class="stdedit" name="pref_min_duration" id="min_duration" value="[% prefs.pref_min_duration %]" size="5">
+            [% END %]
+        [% END %]
+
+        [% IF prefs.exists('pref_max_duration') %]
+            [% WRAPPER settingGroup title="MUSLYMIXER_MAX_DURATION" desc="MUSLYMIXER_MAX_DURATION_DESC" %]
+                <input type="text" class="stdedit" name="pref_max_duration" id="max_duration" value="[% prefs.pref_max_duration %]" size="5">
+            [% END %]
+        [% END %]
+
+        [% IF prefs.exists('pref_port') %]
+            [% WRAPPER settingGroup title="MUSLYMIXER_MUSLY_PORT" desc="MUSLYMIXER_MUSLY_PORT_DESC" %]
+                <input type="text" class="stdedit" name="pref_port" id="port" value="[% prefs.pref_port %]" size="5">
+            [% END %]
+        [% END %]
+    [% END %]
 
 [% PROCESS settings/footer.html %]

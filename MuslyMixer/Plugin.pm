@@ -59,6 +59,7 @@ sub initPlugin {
 
     $prefs->init({
         filter_genres => 1,
+        filter_xmas   => 1,
         port          => 11000,
         min_duration  => 0,
         max_duration  => 0
@@ -189,6 +190,7 @@ sub _getMix {
             'count'       => $NUM_TRACKS,
             'format'      => 'text',
             'filtergenre' => $prefs->get('filter_genres'),
+            'filterxmas'  => $prefs->get('filter_xmas'),
             'min'         => $prefs->get('min_duration'),
             'max'         => $prefs->get('max_duration')
         );
