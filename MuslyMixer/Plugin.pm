@@ -198,7 +198,7 @@ sub _getMix {
             my $id = index($_->url, '#')>0 ? $_->url : $_->path;
             $id = main::ISWINDOWS ? $id : Slim::Utils::Unicode::utf8decode_locale($id);
             'ignore=' . escape($id);
-        } @ignore);
+        } reverse(@ignore));  # ingore is in reverse order, so re-reverse...
         $reqUrl = "$reqUrl\&$ignoreArgs";
     }
 
