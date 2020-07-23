@@ -84,7 +84,6 @@ sub postinitPlugin {
             my ($client, $cb) = @_;
 
             my $seedTracks = Slim::Plugin::DontStopTheMusic::Plugin->getMixableProperties($client, $NUM_SEED_TRACKS);
-            my $ignoreTracks = _getPlaylist($client, $IGNORE_LAST_TRACKS);
             my $tracks = [];
 
             # don't seed from radio stations - only do if we're playing from some track based source
@@ -102,21 +101,10 @@ sub postinitPlugin {
                 }
 
                 if (scalar @seedsToUse > 0) {
-                    my @tracksToIgnore = ();
-                    if ($ignoreTracks && ref $ignoreTracks && scalar @$ignoreTracks) {
-                        my %hash = map { $_ => 1 } @seedIds;
-                        foreach my $ignoreTrack (@$ignoreTracks) {
-                            if (!exists($hash{$ignoreTrack})) {
-                                my ($trackObj) = Slim::Schema->find('Track', $ignoreTrack);
-                                if ($trackObj) {
-                                    push @tracksToIgnore, $trackObj;
-                                }
-                            }
-                        }
-                        main::DEBUGLOG && $log->debug("Num tracks to ignore: " . scalar(@tracksToIgnore));
-                    }
+                    my $ignoreTracks = _getTracksToIgnore($client, \@seedIds, $IGNORE_LAST_TRACKS);
+                    main::DEBUGLOG && $log->debug("Num tracks to ignore: " . scalar(@$ignoreTracks));
 
-                    my $mix = _getMix(\@seedsToUse, \@tracksToIgnore);
+                    my $mix = _getMix(\@seedsToUse, \@$ignoreTracks);
                     main::idleStreams();
                     if ($mix && scalar @$mix) {
                         push @$tracks, @$mix;
@@ -153,29 +141,27 @@ sub title {
     return 'MuslyMIXER';
 }
 
-sub _getPlaylist {
-    my ($client, $count) = @_;
+sub _getTracksToIgnore {
+    my ($client, $seeIds, $count) = @_;
+    my @seeds = ref $seeIds ? @$seeIds : ($seeIds);
+    my %seedsHash = map { $_ => 1 } @seeds;
     return unless $client;
 
     $client = $client->master;
     my ($trackId, $artist, $title, $duration, $mbid, $artist_mbid, $tracks);
 
-    foreach (@{ Slim::Player::Playlist::playList($client) }) {
+    foreach (reverse(@{ Slim::Player::Playlist::playList($client) })) {
         ($artist, $title, $duration, $trackId, $mbid, $artist_mbid) = Slim::Plugin::DontStopTheMusic::Plugin->getMixablePropertiesFromTrack($client, $_);
-        next unless defined $artist && defined $title;
-        push @$tracks, $trackId;
-    }
-
-    return $tracks;
-    if ($tracks && ref $tracks) {
-        my $num = scalar $tracks;
-        if ($num > 0) {
-            if ($num > $count) {
-                $tracks = [ splice(@$tracks, $num - $count, $count) ];
+        next unless defined $artist && defined $title && !exists($seedsHash{$trackId});
+        my ($trackObj) = Slim::Schema->find('Track', $trackId);
+        if ($trackObj) {
+            push @$tracks, $trackObj;
+            if (scalar @$tracks >= $count) {
+                return $tracks;
             }
-            return $tracks;
         }
     }
+    return $tracks;
 }
 
 sub _getMix {
