@@ -104,7 +104,7 @@ sub postinitPlugin {
                     my $ignoreTracks = _getTracksToIgnore($client, \@seedIds, $IGNORE_LAST_TRACKS);
                     main::DEBUGLOG && $log->debug("Num tracks to ignore: " . ($ignoreTracks ? scalar(@$ignoreTracks) : 0));
 
-                    my $mix = _getMix(\@seedsToUse, \@$ignoreTracks);
+                    my $mix = _getMix(\@seedsToUse, $ignoreTracks ? \@$ignoreTracks : undef);
                     main::idleStreams();
                     if ($mix && scalar @$mix) {
                         push @$tracks, @$mix;
