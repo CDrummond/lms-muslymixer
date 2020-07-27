@@ -193,7 +193,7 @@ sub _getMix {
 
     my $reqUrl = "/api/similar?$mixArgs\&$argString";
 
-    if (scalar @ignore > 0) {
+    if ($ignoreTracks and scalar @ignore > 0) {
         my $ignoreArgs = join('&', map {
             my $id = index($_->url, '#')>0 ? $_->url : $_->path;
             $id = main::ISWINDOWS ? $id : Slim::Utils::Unicode::utf8decode_locale($id);
