@@ -33,7 +33,6 @@ use Plugins::MuslyMixer::Settings;
 *escape = main::ISWINDOWS ? \&URI::Escape::uri_escape : \&URI::Escape::uri_escape_utf8;
 
 my $initialized = 0;
-my $MuslyPort;
 my @genreSets = ();
 my $NUM_TRACKS = 15;
 my $NUM_TRACKS_TO_USE = 5;
@@ -170,49 +169,51 @@ sub _getMix {
     my @tracks = ref $seedTracks ? @$seedTracks : ($seedTracks);
     my @ignore = ref $ignoreTracks ? @$ignoreTracks : ($ignoreTracks);
     my @mix = ();
-    my $req;
-    my $res;
+    my @track_paths = ();
+    my @ignore_paths = ();
+    my @exclude_artists = ();
 
-    my %args = (
-            'count'       => $NUM_TRACKS,
-            'format'      => 'text',
-            'filtergenre' => $prefs->get('filter_genres'),
-            'filterxmas'  => $prefs->get('filter_xmas'),
-            'min'         => $prefs->get('min_duration'),
-            'max'         => $prefs->get('max_duration')
-        );
-
-    my $argString = join( '&', map { "$_=$args{$_}" } keys %args );
-
-    # url encode the request, but not the argstring
-    my $mixArgs = join('&', map {
-        my $id = index($_->url, '#')>0 ? $_->url : $_->path;
-        $id = main::ISWINDOWS ? $id : Slim::Utils::Unicode::utf8decode_locale($id);
-        'track=' . escape($id);
-    } @tracks);
-
-    my $reqUrl = "/api/similar?$mixArgs\&$argString";
+    foreach my $track (@tracks) {
+        my $id = index($track->url, '#')>0 ? $track->url : $track->path;
+        push @track_paths, $id;
+    }
 
     if ($ignoreTracks and scalar @ignore > 0) {
-        my $ignoreArgs = join('&', map {
-            my $id = index($_->url, '#')>0 ? $_->url : $_->path;
-            $id = main::ISWINDOWS ? $id : Slim::Utils::Unicode::utf8decode_locale($id);
-            'ignore=' . escape($id);
-        } reverse(@ignore));  # ingore is in reverse order, so re-reverse...
-        $reqUrl = "$reqUrl\&$ignoreArgs";
+        @ignore = reverse(@ignore);
+        foreach my $track (@ignore) {
+            my $id = index($track->url, '#')>0 ? $track->url : $track->path;
+            push @ignore_paths, $id;
+        }
     }
 
     my $exclude = $prefs->get('exclude_artists');
     if ($exclude) {
         my @excludeList = split(/,/, $exclude);
-        my $excludeArgs = join('&', map { 'exclude=' . escape($_); } @excludeList);
-        $reqUrl = "$reqUrl\&$excludeArgs";
+        foreach my $ex (@excludeList) {
+            push @exclude_artists, $ex;
+        }
     }
 
-    my $response = _syncHTTPRequest($reqUrl);
+    my $port = $prefs->get('port') || 11000;
+    my $url = "http://localhost:$port/api/similar";
+    my $http = LWP::UserAgent->new;
+    my $jsonData = to_json({
+                        count       => $NUM_TRACKS,
+                        format      => 'text',
+                        filtergenre => $prefs->get('filter_genres') || 0,
+                        filterxmas  => $prefs->get('filter_xmas') || 0,
+                        min         => $prefs->get('min_duration') || 0,
+                        max         => $prefs->get('max_duration') || 0,
+                        track       => [@track_paths],
+                        ignore      => [@ignore_paths],
+                        exclude     => [@exclude_artists]
+                    });
+    $http->timeout($prefs->get('timeout') || 5);
+    main::DEBUGLOG && $log->debug("Request $url - $jsonData");
+    my $response = $http->post($url, 'Content-Type' => 'application/json;charset=utf-8', 'Content' => $jsonData);
 
     if ($response->is_error) {
-        $log->warn("Warning: Couldn't get mix: $mixArgs\&$argString");
+        $log->warn("Warning: Couldn't get mix: $jsonData");
         main::DEBUGLOG && $log->debug($response->as_string);
         return \@mix;
     }
@@ -234,15 +235,6 @@ sub _getMix {
     }
 
     return \@mix;
-}
-
-sub _syncHTTPRequest {
-    my $url = shift;
-    $MuslyPort = $prefs->get('port') unless $MuslyPort;
-    my $http = LWP::UserAgent->new;
-    $http->timeout($prefs->get('timeout') || 5);
-    main::DEBUGLOG && $log->debug("Request http://localhost:$MuslyPort$url");
-    return $http->get("http://localhost:$MuslyPort$url");
 }
 
 1;
