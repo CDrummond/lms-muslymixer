@@ -12,7 +12,6 @@ use strict;
 
 use Scalar::Util qw(blessed);
 use LWP::UserAgent;
-use URI::Escape qw(uri_escape_utf8);
 use JSON::XS::VersionOneAndTwo;
 use File::Basename;
 use File::Slurp;
@@ -29,8 +28,6 @@ if ( main::WEBUI ) {
 }
 
 use Plugins::MuslyMixer::Settings;
-
-*escape = main::ISWINDOWS ? \&URI::Escape::uri_escape : \&URI::Escape::uri_escape_utf8;
 
 my $initialized = 0;
 my @genreSets = ();
@@ -174,15 +171,13 @@ sub _getMix {
     my @exclude_artists = ();
 
     foreach my $track (@tracks) {
-        my $id = index($track->url, '#')>0 ? $track->url : $track->path;
-        push @track_paths, $id;
+        push @track_paths, $track->url;
     }
 
     if ($ignoreTracks and scalar @ignore > 0) {
         @ignore = reverse(@ignore);
         foreach my $track (@ignore) {
-            my $id = index($track->url, '#')>0 ? $track->url : $track->path;
-            push @ignore_paths, $id;
+            push @ignore_paths, $track->url;
         }
     }
 
