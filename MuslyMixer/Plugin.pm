@@ -109,31 +109,25 @@ sub postinitPlugin {
             }
 
             main::DEBUGLOG && $log->debug("Num mix tracks:" . scalar(@$tracks));
-            # Remove duplicates...
-            #my $deDupTracks = Slim::Plugin::DontStopTheMusic::Plugin->deDupe($tracks);
-            #if ( scalar @$deDupTracks < $NUM_TRACKS_TO_USE ) {
-            #    main::DEBUGLOG && $log->debug("Too few tracks after de-dupe, use orig");
-            #    $deDupTracks = $tracks;
-            #}
 
             # De-dupe tracks by playqueue. DSTM does this, but if we only return 5 tracks which are duplicated
-            # in the playlist then 'Song Mix' will be used. Therefore we want to remove duplicates before we
+            # in the playqueue then 'Song Mix' will be used. Therefore we want to remove duplicates before we
             # trim and shuffle. This means we have a greater chance of adding tracks.
-            my $deDupTracks = Slim::Plugin::DontStopTheMusic::Plugin->deDupePlaylist($client, $tracks);
-            main::DEBUGLOG && $log->debug("Num tracks after de-dupe:" . scalar(@$deDupTracks));
+            $tracks = Slim::Plugin::DontStopTheMusic::Plugin->deDupePlaylist($client, $tracks);
+            main::DEBUGLOG && $log->debug("Num tracks after de-dupe:" . scalar(@$tracks));
 
             # Shuffle tracks...
-            Slim::Player::Playlist::fischer_yates_shuffle($deDupTracks);
+            Slim::Player::Playlist::fischer_yates_shuffle($tracks);
 
             # If we have more than num tracks, then use 1st num...
-            if ( scalar @$deDupTracks > $NUM_TRACKS_TO_USE ) {
-                $deDupTracks = [ splice(@$deDupTracks, 0, $NUM_TRACKS_TO_USE) ];
+            if ( scalar @$tracks > $NUM_TRACKS_TO_USE ) {
+                $tracks = [ splice(@$tracks, 0, $NUM_TRACKS_TO_USE) ];
             }
-            main::DEBUGLOG && $log->debug("Num tracks to use:" . scalar(@$deDupTracks));
-            foreach my $track (@$deDupTracks) {
+            main::DEBUGLOG && $log->debug("Num tracks to use:" . scalar(@$tracks));
+            foreach my $track (@$tracks) {
                 main::DEBUGLOG && $log->debug("..." . $track);
             }
-            $cb->($client, $deDupTracks);
+            $cb->($client, $tracks);
         });
     }
 }
