@@ -31,10 +31,11 @@ use Plugins::MuslyMixer::Settings;
 
 my $initialized = 0;
 my @genreSets = ();
-my $NUM_TRACKS = 15;
+my $NUM_TRACKS = 20;
+my $NUM_TRACKS_TO_SHUFFLE = 12;
 my $NUM_TRACKS_TO_USE = 5;
 my $NUM_SEED_TRACKS = 5;
-my $IGNORE_LAST_TRACKS = 25;
+my $IGNORE_LAST_TRACKS = 35;
 
 my $log = Slim::Utils::Log->addLogCategory({
     'category'     => 'plugin.muslymixer',
@@ -116,10 +117,15 @@ sub postinitPlugin {
             $tracks = Slim::Plugin::DontStopTheMusic::Plugin->deDupePlaylist($client, $tracks);
             main::DEBUGLOG && $log->debug("Num tracks after de-dupe:" . scalar(@$tracks));
 
+            # If we have more than NUM_TRACKS_TO_SHUFFLE tracks, then trim
+            if ( scalar @$tracks > $NUM_TRACKS_TO_SHUFFLE ) {
+                $tracks = [ splice(@$tracks, 0, $NUM_TRACKS_TO_SHUFFLE) ];
+            }
+
             # Shuffle tracks...
             Slim::Player::Playlist::fischer_yates_shuffle($tracks);
 
-            # If we have more than num tracks, then use 1st num...
+            # If we have more than num tracks, then trim
             if ( scalar @$tracks > $NUM_TRACKS_TO_USE ) {
                 $tracks = [ splice(@$tracks, 0, $NUM_TRACKS_TO_USE) ];
             }
