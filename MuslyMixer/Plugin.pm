@@ -108,6 +108,7 @@ sub postinitPlugin {
                 }
             }
 
+            main::DEBUGLOG && $log->debug("Num mix tracks:" . scalar(@$tracks));
             # Remove duplicates...
             my $deDupTracks = Slim::Plugin::DontStopTheMusic::Plugin->deDupe($tracks);
             if ( scalar @$deDupTracks < $NUM_TRACKS_TO_USE ) {
@@ -115,12 +116,17 @@ sub postinitPlugin {
                 $deDupTracks = $tracks;
             }
 
+            main::DEBUGLOG && $log->debug("Num tracks after de-dupe:" . scalar(@$deDupTracks));
             # Shuffle tracks...
             Slim::Player::Playlist::fischer_yates_shuffle($deDupTracks);
 
             # If we have more than num tracks, then use 1st num...
             if ( scalar @$deDupTracks > $NUM_TRACKS_TO_USE ) {
                 $deDupTracks = [ splice(@$deDupTracks, 0, $NUM_TRACKS_TO_USE) ];
+            }
+            main::DEBUGLOG && $log->debug("Num tracks to use:" . scalar(@$deDupTracks));
+            foreach my $track (@$deDupTracks) {
+                main::DEBUGLOG && $log->debug("..." . $track);
             }
             $cb->($client, $deDupTracks);
         });
@@ -208,7 +214,7 @@ sub _getMix {
     my $response = $http->post($url, 'Content-Type' => 'application/json;charset=utf-8', 'Content' => $jsonData);
 
     if ($response->is_error) {
-        $log->warn("Warning: Couldn't get mix: $jsonData");
+        $log->warn("Warning: Couldn't get mix");
         main::DEBUGLOG && $log->debug($response->as_string);
         return \@mix;
     }
