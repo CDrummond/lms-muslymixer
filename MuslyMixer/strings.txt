@@ -6,11 +6,17 @@ MUSLYMIXER
 MUSLYMIXER_DESC
 	EN	Musly Mixer for Don't Stop The Music
 
-MUSLYMIXER_EXCLUDE_ATRISTS
+MUSLYMIXER_EXCLUDE_ARTISTS
 	EN	Exclude artists from mixes
 
-MUSLYMIXER_EXCLUDE_ATRISTS_DESC
+MUSLYMIXER_EXCLUDE_ARTISTS_DESC
 	EN	Comma-separated list of artist names to exclude from mixes
+
+MUSLYMIXER_EXCLUDE_ALBUMS
+	EN	Exclude albums from mixes
+
+MUSLYMIXER_EXCLUDE_ALBUMS_DESC
+	EN	Comma-separated list of albums to exclude from mixes. Use 'AlbumArtist - Album'
 
 MUSLYMIXER_FILTER_GENRES
 	EN	Restrict genres

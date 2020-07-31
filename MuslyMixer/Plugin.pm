@@ -58,6 +58,7 @@ sub initPlugin {
         filter_genres   => 1,
         filter_xmas     => 1,
         exclude_artists => '',
+        exclude_albums  => '',
         port            => 11000,
         min_duration    => 0,
         max_duration    => 0
@@ -180,6 +181,7 @@ sub _getMix {
     my @track_paths = ();
     my @ignore_paths = ();
     my @exclude_artists = ();
+    my @exclude_albums = ();
 
     foreach my $track (@tracks) {
         push @track_paths, $track->url;
@@ -194,9 +196,17 @@ sub _getMix {
 
     my $exclude = $prefs->get('exclude_artists');
     if ($exclude) {
-        my @excludeList = split(/,/, $exclude);
-        foreach my $ex (@excludeList) {
+        my @exclude_list = split(/,/, $exclude);
+        foreach my $ex (@exclude_list) {
             push @exclude_artists, $ex;
+        }
+    }
+
+    $exclude = $prefs->get('exclude_albums');
+    if ($exclude) {
+        my @exclude_list = split(/,/, $exclude);
+        foreach my $ex (@exclude_list) {
+            push @exclude_albums, $ex;
         }
     }
 
@@ -204,15 +214,16 @@ sub _getMix {
     my $url = "http://localhost:$port/api/similar";
     my $http = LWP::UserAgent->new;
     my $jsonData = to_json({
-                        count       => $NUM_TRACKS,
-                        format      => 'text',
-                        filtergenre => $prefs->get('filter_genres') || 0,
-                        filterxmas  => $prefs->get('filter_xmas') || 0,
-                        min         => $prefs->get('min_duration') || 0,
-                        max         => $prefs->get('max_duration') || 0,
-                        track       => [@track_paths],
-                        ignore      => [@ignore_paths],
-                        exclude     => [@exclude_artists]
+                        count         => $NUM_TRACKS,
+                        format        => 'text',
+                        filtergenre   => $prefs->get('filter_genres') || 0,
+                        filterxmas    => $prefs->get('filter_xmas') || 0,
+                        min           => $prefs->get('min_duration') || 0,
+                        max           => $prefs->get('max_duration') || 0,
+                        track         => [@track_paths],
+                        ignore        => [@ignore_paths],
+                        excludeartist => [@exclude_artists],
+                        excludealbum  => [@exclude_albums]
                     });
     $http->timeout($prefs->get('timeout') || 5);
     main::DEBUGLOG && $log->debug("Request $url - $jsonData");

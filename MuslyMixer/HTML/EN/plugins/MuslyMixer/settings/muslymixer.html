@@ -15,8 +15,12 @@
             </select>
         [% END %]
 
-        [% WRAPPER settingGroup title="MUSLYMIXER_EXCLUDE_ATRISTS" desc="MUSLYMIXER_EXCLUDE_ATRISTS_DESC" %]
+        [% WRAPPER settingGroup title="MUSLYMIXER_EXCLUDE_ARTISTS" desc="MUSLYMIXER_EXCLUDE_ARTISTS_DESC" %]
             <input type="text" class="stdedit" name="pref_exclude_artists" id="exclude_artists" value="[% prefs.pref_exclude_artists %]" size="80">
+        [% END %]
+
+        [% WRAPPER settingGroup title="MUSLYMIXER_EXCLUDE_ALBUMS" desc="MUSLYMIXER_EXCLUDE_ALBUMS_DESC" %]
+            <input type="text" class="stdedit" name="pref_exclude_albums" id="exclude_albums" value="[% prefs.pref_exclude_albums %]" size="80">
         [% END %]
 
         [% IF prefs.exists('pref_min_duration') %]
