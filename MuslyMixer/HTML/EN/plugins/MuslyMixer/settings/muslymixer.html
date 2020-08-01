@@ -1,7 +1,7 @@
 [% PROCESS settings/header.html %]
 
     [% WRAPPER settingSection %]
-        [% WRAPPER settingGroup title="MUSLYMIXER_FILTER_XMAS" desc="MUSLYMIXER_FILTER_GENRES_DESC" %]
+        [% WRAPPER settingGroup title="MUSLYMIXER_FILTER_GENRES" desc="MUSLYMIXER_FILTER_GENRES_DESC" %]
             <select class="stdedit" name="pref_filter_genres" id="filter_genres">
                 <option [% IF NOT prefs.filter_genres %]selected [% END %]value="0">[% 'NO' | getstring %]</option>
                 <option [% IF prefs.filter_genres %]selected [% END %]value="1">[% 'YES' | getstring %]</option>
