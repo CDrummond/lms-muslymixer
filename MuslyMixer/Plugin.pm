@@ -102,39 +102,66 @@ sub postinitPlugin {
                     my $ignoreTracks = _getTracksToIgnore($client, \@seedIds, $IGNORE_LAST_TRACKS);
                     main::DEBUGLOG && $log->debug("Num tracks to ignore: " . ($ignoreTracks ? scalar(@$ignoreTracks) : 0));
 
-                    my $mix = _getMix(\@seedsToUse, $ignoreTracks ? \@$ignoreTracks : undef);
-                    main::idleStreams();
-                    if ($mix && scalar @$mix) {
-                        push @$tracks, @$mix;
-                    }
+                    my $jsonData = _getMixData(\@seedsToUse, $ignoreTracks ? \@$ignoreTracks : undef);
+                    my $port = $prefs->get('port') || 11000;
+                    my $url = "http://localhost:$port/api/similar";
+                    Slim::Networking::SimpleAsyncHTTP->new(
+                        sub {
+                            my $response = shift;
+                            main::DEBUGLOG && $log->debug("Received Musly response");
+
+                            my @songs = split(/\n/, $response->content);
+                            my $count = scalar @songs;
+                            my $tracks = ();
+
+                            for (my $j = 0; $j < $count; $j++) {
+                                # Bug 4281 - need to convert from UTF-8 on Windows.
+                                if (main::ISWINDOWS && !-e $songs[$j] && -e Win32::GetANSIPathName($songs[$j])) {
+                                    $songs[$j] = Win32::GetANSIPathName($songs[$j]);
+                                }
+
+                                if ( -e $songs[$j] || -e Slim::Utils::Unicode::utf8encode_locale($songs[$j]) || index($songs[$j], 'file:///')==0) {
+                                    push @$tracks, Slim::Utils::Misc::fileURLFromPath($songs[$j]);
+                                } else {
+                                    $log->error('Musly attempted to mix in a song at ' . $songs[$j] . ' that can\'t be found at that location');
+                                }
+                            }
+
+                            main::DEBUGLOG && $log->debug("Num mix tracks:" . scalar(@$tracks));
+
+                            # De-dupe tracks by playqueue. DSTM does this, but if we only return 5 tracks which are duplicated
+                            # in the playqueue then 'Song Mix' will be used. Therefore we want to remove duplicates before we
+                            # trim and shuffle. This means we have a greater chance of adding tracks.
+                            $tracks = Slim::Plugin::DontStopTheMusic::Plugin->deDupePlaylist($client, $tracks);
+                            main::DEBUGLOG && $log->debug("Num tracks after de-dupe:" . scalar(@$tracks));
+
+                            # If we have more than NUM_TRACKS_TO_SHUFFLE tracks, then trim
+                            if ( scalar @$tracks > $NUM_TRACKS_TO_SHUFFLE ) {
+                                $tracks = [ splice(@$tracks, 0, $NUM_TRACKS_TO_SHUFFLE) ];
+                            }
+
+                            # Shuffle tracks...
+                            Slim::Player::Playlist::fischer_yates_shuffle($tracks);
+
+                            # If we have more than num tracks, then trim
+                            if ( scalar @$tracks > $NUM_TRACKS_TO_USE ) {
+                                $tracks = [ splice(@$tracks, 0, $NUM_TRACKS_TO_USE) ];
+                            }
+                            main::DEBUGLOG && $log->debug("Num tracks to use:" . scalar(@$tracks));
+                            foreach my $track (@$tracks) {
+                                main::DEBUGLOG && $log->debug("..." . $track);
+                            }
+                            $cb->($client, $tracks);
+                        },
+                        sub {
+                            my $response = shift;
+                            my $error  = $response->error;
+                            main::DEBUGLOG && $log->debug("Failed to fetch URL: $error");
+                            $cb->($client, []);
+                        }
+                    )->post($url, 'Content-Type' => 'application/json;charset=utf-8', $jsonData);
                 }
             }
-
-            main::DEBUGLOG && $log->debug("Num mix tracks:" . scalar(@$tracks));
-
-            # De-dupe tracks by playqueue. DSTM does this, but if we only return 5 tracks which are duplicated
-            # in the playqueue then 'Song Mix' will be used. Therefore we want to remove duplicates before we
-            # trim and shuffle. This means we have a greater chance of adding tracks.
-            $tracks = Slim::Plugin::DontStopTheMusic::Plugin->deDupePlaylist($client, $tracks);
-            main::DEBUGLOG && $log->debug("Num tracks after de-dupe:" . scalar(@$tracks));
-
-            # If we have more than NUM_TRACKS_TO_SHUFFLE tracks, then trim
-            if ( scalar @$tracks > $NUM_TRACKS_TO_SHUFFLE ) {
-                $tracks = [ splice(@$tracks, 0, $NUM_TRACKS_TO_SHUFFLE) ];
-            }
-
-            # Shuffle tracks...
-            Slim::Player::Playlist::fischer_yates_shuffle($tracks);
-
-            # If we have more than num tracks, then trim
-            if ( scalar @$tracks > $NUM_TRACKS_TO_USE ) {
-                $tracks = [ splice(@$tracks, 0, $NUM_TRACKS_TO_USE) ];
-            }
-            main::DEBUGLOG && $log->debug("Num tracks to use:" . scalar(@$tracks));
-            foreach my $track (@$tracks) {
-                main::DEBUGLOG && $log->debug("..." . $track);
-            }
-            $cb->($client, $tracks);
         });
     }
 }
@@ -172,7 +199,7 @@ sub _getTracksToIgnore {
     return $tracks;
 }
 
-sub _getMix {
+sub _getMixData {
     my $seedTracks = shift;
     my $ignoreTracks = shift;
     my @tracks = ref $seedTracks ? @$seedTracks : ($seedTracks);
@@ -210,8 +237,6 @@ sub _getMix {
         }
     }
 
-    my $port = $prefs->get('port') || 11000;
-    my $url = "http://localhost:$port/api/similar";
     my $http = LWP::UserAgent->new;
     my $jsonData = to_json({
                         count         => $NUM_TRACKS,
@@ -226,32 +251,8 @@ sub _getMix {
                         excludealbum  => [@exclude_albums]
                     });
     $http->timeout($prefs->get('timeout') || 5);
-    main::DEBUGLOG && $log->debug("Request $url - $jsonData");
-    my $response = $http->post($url, 'Content-Type' => 'application/json;charset=utf-8', 'Content' => $jsonData);
-
-    if ($response->is_error) {
-        $log->warn("Warning: Couldn't get mix");
-        main::DEBUGLOG && $log->debug($response->as_string);
-        return \@mix;
-    }
-
-    my @songs = split(/\n/, $response->content);
-    my $count = scalar @songs;
-
-    for (my $j = 0; $j < $count; $j++) {
-        # Bug 4281 - need to convert from UTF-8 on Windows.
-        if (main::ISWINDOWS && !-e $songs[$j] && -e Win32::GetANSIPathName($songs[$j])) {
-            $songs[$j] = Win32::GetANSIPathName($songs[$j]);
-        }
-
-        if ( -e $songs[$j] || -e Slim::Utils::Unicode::utf8encode_locale($songs[$j]) || index($songs[$j], 'file:///')==0) {
-            push @mix, Slim::Utils::Misc::fileURLFromPath($songs[$j]);
-        } else {
-            $log->error('Musly attempted to mix in a song at ' . $songs[$j] . ' that can\'t be found at that location');
-        }
-    }
-
-    return \@mix;
+    main::DEBUGLOG && $log->debug("Request $jsonData");
+    return $jsonData;
 }
 
 1;
