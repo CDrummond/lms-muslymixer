@@ -1,3 +1,8 @@
+0.0.2
+-----
+1. Have API server do more of the filtering.
+2. Have API do shuffling, and therefore use all of its tracks.
+
 0.0.1
 -----
 1. Initial release.

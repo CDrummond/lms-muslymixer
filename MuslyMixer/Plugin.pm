@@ -31,11 +31,9 @@ use Plugins::MuslyMixer::Settings;
 
 my $initialized = 0;
 my @genreSets = ();
-my $NUM_TRACKS = 20;
-my $NUM_TRACKS_TO_SHUFFLE = 12;
 my $NUM_TRACKS_TO_USE = 5;
 my $NUM_SEED_TRACKS = 5;
-my $IGNORE_LAST_TRACKS = 35;
+my $MAX_PREVIOUS_TRACKS = 100;
 
 my $log = Slim::Utils::Log->addLogCategory({
     'category'     => 'plugin.muslymixer',
@@ -99,10 +97,10 @@ sub postinitPlugin {
                 }
 
                 if (scalar @seedsToUse > 0) {
-                    my $ignoreTracks = _getTracksToIgnore($client, \@seedIds, $IGNORE_LAST_TRACKS);
-                    main::DEBUGLOG && $log->debug("Num tracks to ignore: " . ($ignoreTracks ? scalar(@$ignoreTracks) : 0));
+                    my $previousTracks = _getPreviousTracks($client, \@seedIds, $MAX_PREVIOUS_TRACKS);
+                    main::DEBUGLOG && $log->debug("Num tracks to previous: " . ($previousTracks ? scalar(@$previousTracks) : 0));
 
-                    my $jsonData = _getMixData(\@seedsToUse, $ignoreTracks ? \@$ignoreTracks : undef);
+                    my $jsonData = _getMixData(\@seedsToUse, $previousTracks ? \@$previousTracks : undef);
                     my $port = $prefs->get('port') || 11000;
                     my $url = "http://localhost:$port/api/similar";
                     Slim::Networking::SimpleAsyncHTTP->new(
@@ -127,26 +125,6 @@ sub postinitPlugin {
                                 }
                             }
 
-                            main::DEBUGLOG && $log->debug("Num mix tracks:" . scalar(@$tracks));
-
-                            # De-dupe tracks by playqueue. DSTM does this, but if we only return 5 tracks which are duplicated
-                            # in the playqueue then 'Song Mix' will be used. Therefore we want to remove duplicates before we
-                            # trim and shuffle. This means we have a greater chance of adding tracks.
-                            $tracks = Slim::Plugin::DontStopTheMusic::Plugin->deDupePlaylist($client, $tracks);
-                            main::DEBUGLOG && $log->debug("Num tracks after de-dupe:" . scalar(@$tracks));
-
-                            # If we have more than NUM_TRACKS_TO_SHUFFLE tracks, then trim
-                            if ( scalar @$tracks > $NUM_TRACKS_TO_SHUFFLE ) {
-                                $tracks = [ splice(@$tracks, 0, $NUM_TRACKS_TO_SHUFFLE) ];
-                            }
-
-                            # Shuffle tracks...
-                            Slim::Player::Playlist::fischer_yates_shuffle($tracks);
-
-                            # If we have more than num tracks, then trim
-                            if ( scalar @$tracks > $NUM_TRACKS_TO_USE ) {
-                                $tracks = [ splice(@$tracks, 0, $NUM_TRACKS_TO_USE) ];
-                            }
                             main::DEBUGLOG && $log->debug("Num tracks to use:" . scalar(@$tracks));
                             foreach my $track (@$tracks) {
                                 main::DEBUGLOG && $log->debug("..." . $track);
@@ -176,7 +154,7 @@ sub title {
     return 'MuslyMIXER';
 }
 
-sub _getTracksToIgnore {
+sub _getPreviousTracks {
     my ($client, $seeIds, $count) = @_;
     my @seeds = ref $seeIds ? @$seeIds : ($seeIds);
     my %seedsHash = map { $_ => 1 } @seeds;
@@ -201,12 +179,12 @@ sub _getTracksToIgnore {
 
 sub _getMixData {
     my $seedTracks = shift;
-    my $ignoreTracks = shift;
+    my $previousTracks = shift;
     my @tracks = ref $seedTracks ? @$seedTracks : ($seedTracks);
-    my @ignore = ref $ignoreTracks ? @$ignoreTracks : ($ignoreTracks);
+    my @previous = ref $previousTracks ? @$previousTracks : ($previousTracks);
     my @mix = ();
     my @track_paths = ();
-    my @ignore_paths = ();
+    my @previous_paths = ();
     my @exclude_artists = ();
     my @exclude_albums = ();
 
@@ -214,10 +192,10 @@ sub _getMixData {
         push @track_paths, $track->url;
     }
 
-    if ($ignoreTracks and scalar @ignore > 0) {
-        @ignore = reverse(@ignore);
-        foreach my $track (@ignore) {
-            push @ignore_paths, $track->url;
+    if ($previousTracks and scalar @previous > 0) {
+        @previous = reverse(@previous);
+        foreach my $track (@previous) {
+            push @previous_paths, $track->url;
         }
     }
 
@@ -239,14 +217,14 @@ sub _getMixData {
 
     my $http = LWP::UserAgent->new;
     my $jsonData = to_json({
-                        count         => $NUM_TRACKS,
+                        count         => $NUM_TRACKS_TO_USE,
                         format        => 'text',
                         filtergenre   => $prefs->get('filter_genres') || 0,
                         filterxmas    => $prefs->get('filter_xmas') || 0,
                         min           => $prefs->get('min_duration') || 0,
                         max           => $prefs->get('max_duration') || 0,
                         track         => [@track_paths],
-                        ignore        => [@ignore_paths],
+                        previous      => [@previous_paths],
                         excludeartist => [@exclude_artists],
                         excludealbum  => [@exclude_albums]
                     });
