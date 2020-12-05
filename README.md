@@ -1,4 +1,4 @@
-**DEPRECATED** Please use [Music Similarity'](https://github.com/CDrummond/lms-musicsimilarity) instead.
+**DEPRECATED** Please use [Music Similarity](https://github.com/CDrummond/lms-musicsimilarity) instead.
 
 ---
 
